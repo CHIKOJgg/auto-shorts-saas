@@ -13,6 +13,7 @@ const { closeDb, countUploads } = require('./db/database');
 const uploadRouter = require('./routes/upload');
 const historyRouter = require('./routes/history');
 const authRouter = require('./routes/auth');
+const subscriptionsRouter = require('./routes/subscriptions');
 
 const app = express();
 
@@ -155,6 +156,7 @@ app.use('/uploads', express.static(uploadsDir, {
 }));
 
 app.use('/api/auth', authRouter);
+app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/history', historyRouter);
 

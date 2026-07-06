@@ -9,6 +9,7 @@ const { validateTitle } = require('../utils/validation');
 const { validateVideoFile } = require('../utils/fileValidator');
 const { AppError } = require('../middleware/errorHandler');
 const { requireAuth } = require('../middleware/auth');
+const { checkUsageLimit } = require('../middleware/usageLimit');
 
 const router = express.Router();
 
@@ -45,7 +46,7 @@ function removeFile(filepath) {
   }
 }
 
-router.post('/', requireAuth, (req, res, next) => {
+router.post('/', requireAuth, checkUsageLimit, (req, res, next) => {
   upload.single('video')(req, res, (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {

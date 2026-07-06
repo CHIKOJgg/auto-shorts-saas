@@ -116,3 +116,34 @@ describe('GET /api/auth/me', () => {
     expect(res.status).toBe(401);
   });
 });
+
+describe('GET /api/subscriptions/plans', () => {
+  it('returns available plans', async () => {
+    const res = await request(app).get('/api/subscriptions/plans');
+    expect(res.status).toBe(200);
+    expect(res.body.plans).toHaveLength(3);
+    expect(res.body.plans[0].id).toBe('free');
+  });
+});
+
+describe('GET /api/subscriptions/current', () => {
+  it('returns current subscription info', async () => {
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ email: 'sub@example.com', password: 'password123', name: 'Sub User' });
+    const token = reg.body.token;
+
+    const res = await request(app)
+      .get('/api/subscriptions/current')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(200);
+    expect(res.body.tier).toBe('free');
+    expect(res.body.usage).toHaveProperty('used');
+    expect(res.body.usage).toHaveProperty('limit');
+  });
+
+  it('rejects without auth', async () => {
+    const res = await request(app).get('/api/subscriptions/current');
+    expect(res.status).toBe(401);
+  });
+});
