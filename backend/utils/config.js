@@ -3,8 +3,11 @@ const OPTIONAL_VARS = [
   { name: 'PORT', default: '4000' },
   { name: 'OPENAI_MODEL', default: 'gpt-3.5-turbo' },
   { name: 'CORS_ORIGIN', default: 'http://localhost:3000' },
-  { name: 'DB_PATH', default: './data/shorts.db' },
   { name: 'NODE_ENV', default: 'development' },
+  { name: 'DATABASE_URL', default: 'postgresql://postgres:postgres@localhost:5432/auto_shorts_saas' },
+  { name: 'JWT_SECRET', default: 'dev-jwt-secret-do-not-use-in-production' },
+  { name: 'JWT_EXPIRES_IN', default: '7d' },
+  { name: 'LOG_LEVEL', default: 'debug' },
 ];
 
 function validateEnv() {

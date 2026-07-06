@@ -92,11 +92,11 @@ const uploadLimiter = rateLimit({
 });
 app.use('/api/upload', uploadLimiter);
 
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (req, res) => {
   let dbOk = false;
   let uploadCount = 0;
   try {
-    uploadCount = countUploads();
+    uploadCount = await countUploads();
     dbOk = true;
   } catch (err) {
     logger.error({ err }, 'Health check DB failure');
@@ -174,20 +174,23 @@ if (require.main === module) {
 
   startCleanupScheduler();
 
-  const gracefulShutdown = (signal) => {
+  const gracefulShutdown = async (signal) => {
     logger.info({ signal }, 'Shutting down gracefully');
-    server.close(() => {
-      closeDb();
+    server.close(async () => {
+      await closeDb();
       logger.info('Server and database closed');
       process.exit(0);
     });
-    setTimeout(() => {
+    setTimeout(async () => {
       logger.error('Forced shutdown after timeout');
-      closeDb();
+      await closeDb();
       process.exit(1);
     }, 10000);
   };
 
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('unhandledRejection', (reason) => {
+  logger.error({ err: reason }, 'Unhandled Promise rejection');
+});
 }

@@ -79,7 +79,7 @@ router.post('/', (req, res, next) => {
 
     const ipAddress = req.ip || req.socket?.remoteAddress || null;
 
-    saveUpload({
+    await saveUpload({
       filename: req.file.filename,
       originalName: req.file.originalname,
       title: titleResult.value,

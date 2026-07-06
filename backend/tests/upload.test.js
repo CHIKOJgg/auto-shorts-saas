@@ -2,15 +2,23 @@ const request = require('supertest');
 const path = require('path');
 const fs = require('fs');
 const app = require('../server');
+const db = require('../db/knex');
 const { closeDb } = require('../db/database');
 
-beforeAll(() => {
-  process.env.DB_PATH = ':memory:';
+beforeAll(async () => {
   process.env.NODE_ENV = 'test';
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST || 'postgresql://postgres:postgres@localhost:5432/auto_shorts_saas_test';
+  await db.migrate.latest();
+  await db.seed.run();
 });
 
-afterAll(() => {
-  closeDb();
+afterAll(async () => {
+  await closeDb();
+});
+
+beforeEach(async () => {
+  await db('uploads').del();
+  await db('users').del();
 });
 
 describe('GET /api/health', () => {
@@ -60,7 +68,6 @@ describe('GET /api/history/:id', () => {
 
 describe('POST /api/upload', () => {
   const testVideo = path.join(__dirname, 'fixtures', 'test.mp4');
-  let hasFixture = false;
 
   beforeAll(() => {
     const fixtureDir = path.join(__dirname, 'fixtures');
@@ -74,7 +81,6 @@ describe('POST /api/upload', () => {
       ]);
       fs.writeFileSync(testVideo, minimalMp4);
     }
-    hasFixture = fs.existsSync(testVideo);
   });
 
   it('rejects request without file', async () => {
@@ -86,7 +92,6 @@ describe('POST /api/upload', () => {
   });
 
   it('rejects request without title', async () => {
-    if (!hasFixture) return;
     const res = await request(app)
       .post('/api/upload')
       .attach('video', testVideo);
@@ -95,7 +100,6 @@ describe('POST /api/upload', () => {
   });
 
   it('rejects empty title', async () => {
-    if (!hasFixture) return;
     const res = await request(app)
       .post('/api/upload')
       .field('title', '')
