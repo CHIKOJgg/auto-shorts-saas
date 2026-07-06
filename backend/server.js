@@ -14,6 +14,7 @@ const uploadRouter = require('./routes/upload');
 const historyRouter = require('./routes/history');
 const authRouter = require('./routes/auth');
 const subscriptionsRouter = require('./routes/subscriptions');
+const stripeRouter = require('./routes/stripe');
 
 const app = express();
 
@@ -74,7 +75,14 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({
+  limit: '1mb',
+  verify: (req, _res, buf) => {
+    if (req.originalUrl === '/api/stripe/webhook') {
+      req.rawBody = buf;
+    }
+  },
+}));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -157,6 +165,7 @@ app.use('/uploads', express.static(uploadsDir, {
 
 app.use('/api/auth', authRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
+app.use('/api/stripe', stripeRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/history', historyRouter);
 
