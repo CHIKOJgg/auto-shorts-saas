@@ -1,5 +1,11 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ErrorBoundary from './components/ErrorBoundary';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
 
 const API_URL = process.env.REACT_APP_API_URL || '';
 const ALLOWED_TYPES = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
@@ -14,6 +20,7 @@ function UploadForm({ onResult, onError }) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef();
+  const { getToken } = useAuth();
 
   useEffect(() => {
     return () => {
@@ -113,6 +120,7 @@ function UploadForm({ onResult, onError }) {
         xhr.addEventListener('error', () => reject(new Error('Network error')));
         xhr.addEventListener('abort', () => reject(new Error('Upload cancelled')));
         xhr.open('POST', `${API_URL}/api/upload`);
+        xhr.setRequestHeader('Authorization', `Bearer ${getToken()}`);
         xhr.send(formData);
       });
 
@@ -370,7 +378,7 @@ function ResultView({ result, onReset }) {
   );
 }
 
-function App() {
+function HomePage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
 
@@ -380,33 +388,55 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-        <header className="text-center">
-          <h1 className="text-4xl font-bold text-white tracking-tight sm:text-5xl">
-            Shorts AI
-          </h1>
-          <p className="mt-3 text-lg text-slate-400">
-            Upload your video, get AI-generated descriptions and hashtags
-          </p>
-        </header>
+    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+      <header className="text-center">
+        <h1 className="text-4xl font-bold text-white tracking-tight sm:text-5xl">
+          Shorts AI
+        </h1>
+        <p className="mt-3 text-lg text-slate-400">
+          Upload your video, get AI-generated descriptions and hashtags
+        </p>
+      </header>
 
-        {error && (
-          <div
-            className="mt-6 rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
+      {error && (
+        <div
+          className="mt-6 rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-400"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
 
-        {!result ? (
-          <UploadForm onResult={setResult} onError={setError} />
-        ) : (
-          <ResultView result={result} onReset={resetForm} />
-        )}
-      </div>
+      {!result ? (
+        <UploadForm onResult={setResult} onError={setError} />
+      ) : (
+        <ResultView result={result} onReset={resetForm} />
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+          <Navbar />
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <HomePage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
