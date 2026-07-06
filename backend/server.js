@@ -141,7 +141,7 @@ function getDiskUsage(dirPath) {
         if (stat.isFile()) {
           totalBytes += stat.size;
         }
-      } catch { }
+      } catch (_) { /* ignore individual file stat errors */ }
     }
     return {
       fileCount: files.filter(f => f !== '.gitkeep').length,

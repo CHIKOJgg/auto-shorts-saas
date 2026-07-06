@@ -19,7 +19,7 @@ const TIER_MAP = {
 
 router.post('/create-checkout-session', requireAuth, async (req, res, next) => {
   try {
-    const { priceId, tier } = req.body;
+    const { tier } = req.body;
 
     if (!tier || !PRICE_MAP[tier]) {
       throw new AppError('Invalid tier specified');

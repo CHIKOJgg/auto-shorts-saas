@@ -23,7 +23,7 @@ async function runCleanup() {
           fs.unlinkSync(filepath);
           filesDeleted++;
         }
-      } catch (_) {}
+      } catch (_) { /* ignore file deletion errors */ }
     }
 
     if (deletedCount > 0 || filesDeleted > 0) {
