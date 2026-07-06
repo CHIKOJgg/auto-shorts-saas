@@ -1,0 +1,20 @@
+{
+  "name": "auto-short-saas",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm start --prefix frontend/frontend",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:frontend": "npm run build --prefix frontend/frontend",
+    "start:backend": "npm start --prefix backend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend/frontend",
+    "lint:backend": "npm run lint --prefix backend",
+    "test:backend": "npm test --prefix backend",
+    "test:frontend": "npm test --prefix frontend/frontend",
+    "test": "npm run test:backend && npm run test:frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
