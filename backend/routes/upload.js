@@ -8,6 +8,7 @@ const { saveUpload } = require('../db/database');
 const { validateTitle } = require('../utils/validation');
 const { validateVideoFile } = require('../utils/fileValidator');
 const { AppError } = require('../middleware/errorHandler');
+const { requireAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -44,7 +45,7 @@ function removeFile(filepath) {
   }
 }
 
-router.post('/', (req, res, next) => {
+router.post('/', requireAuth, (req, res, next) => {
   upload.single('video')(req, res, (err) => {
     if (err) {
       if (err instanceof multer.MulterError) {
@@ -80,6 +81,7 @@ router.post('/', (req, res, next) => {
     const ipAddress = req.ip || req.socket?.remoteAddress || null;
 
     await saveUpload({
+      userId: req.user.id,
       filename: req.file.filename,
       originalName: req.file.originalname,
       title: titleResult.value,

@@ -5,11 +5,18 @@ const app = require('../server');
 const db = require('../db/knex');
 const { closeDb } = require('../db/database');
 
+let userToken;
+
 beforeAll(async () => {
   process.env.NODE_ENV = 'test';
   process.env.DATABASE_URL = process.env.DATABASE_URL_TEST || 'postgresql://postgres:postgres@localhost:5432/auto_shorts_saas_test';
   await db.migrate.latest();
   await db.seed.run();
+
+  const reg = await request(app)
+    .post('/api/auth/register')
+    .send({ email: 'upload-test@example.com', password: 'password123', name: 'Upload Tester' });
+  userToken = reg.body.token;
 });
 
 afterAll(async () => {
@@ -18,7 +25,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await db('uploads').del();
-  await db('users').del();
+  await db('users').where('email', '!=', 'upload-test@example.com').del();
 });
 
 describe('GET /api/health', () => {
@@ -32,8 +39,15 @@ describe('GET /api/health', () => {
 });
 
 describe('GET /api/history', () => {
-  it('returns empty list initially', async () => {
+  it('requires authentication', async () => {
     const res = await request(app).get('/api/history');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns empty list initially', async () => {
+    const res = await request(app)
+      .get('/api/history')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.status).toBe(200);
     expect(res.body).toHaveProperty('data');
     expect(res.body.data).toEqual([]);
@@ -41,14 +55,18 @@ describe('GET /api/history', () => {
   });
 
   it('supports pagination parameters', async () => {
-    const res = await request(app).get('/api/history?limit=10&offset=0');
+    const res = await request(app)
+      .get('/api/history?limit=10&offset=0')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.status).toBe(200);
     expect(res.body.limit).toBe(10);
     expect(res.body.offset).toBe(0);
   });
 
   it('clamps limit to max 100', async () => {
-    const res = await request(app).get('/api/history?limit=999');
+    const res = await request(app)
+      .get('/api/history?limit=999')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.status).toBe(200);
     expect(res.body.limit).toBe(100);
   });
@@ -56,12 +74,16 @@ describe('GET /api/history', () => {
 
 describe('GET /api/history/:id', () => {
   it('returns 404 for non-existent upload', async () => {
-    const res = await request(app).get('/api/history/99999');
+    const res = await request(app)
+      .get('/api/history/99999')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.status).toBe(404);
   });
 
   it('returns 400 for invalid id', async () => {
-    const res = await request(app).get('/api/history/abc');
+    const res = await request(app)
+      .get('/api/history/abc')
+      .set('Authorization', `Bearer ${userToken}`);
     expect(res.status).toBe(400);
   });
 });
@@ -83,9 +105,17 @@ describe('POST /api/upload', () => {
     }
   });
 
+  it('requires authentication', async () => {
+    const res = await request(app)
+      .post('/api/upload')
+      .field('title', 'Test Title');
+    expect(res.status).toBe(401);
+  });
+
   it('rejects request without file', async () => {
     const res = await request(app)
       .post('/api/upload')
+      .set('Authorization', `Bearer ${userToken}`)
       .field('title', 'Test Title');
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/video file/i);
@@ -94,6 +124,7 @@ describe('POST /api/upload', () => {
   it('rejects request without title', async () => {
     const res = await request(app)
       .post('/api/upload')
+      .set('Authorization', `Bearer ${userToken}`)
       .attach('video', testVideo);
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/title/i);
@@ -102,6 +133,7 @@ describe('POST /api/upload', () => {
   it('rejects empty title', async () => {
     const res = await request(app)
       .post('/api/upload')
+      .set('Authorization', `Bearer ${userToken}`)
       .field('title', '')
       .attach('video', testVideo);
     expect(res.status).toBe(400);
@@ -113,6 +145,7 @@ describe('POST /api/upload', () => {
     fs.writeFileSync(fakeFile, Buffer.from([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]));
     const res = await request(app)
       .post('/api/upload')
+      .set('Authorization', `Bearer ${userToken}`)
       .field('title', 'Test Title')
       .attach('video', fakeFile, { contentType: 'video/mp4' });
     fs.unlinkSync(fakeFile);
@@ -126,6 +159,7 @@ describe('POST /api/upload', () => {
     fs.writeFileSync(largeFile, buf);
     const res = await request(app)
       .post('/api/upload')
+      .set('Authorization', `Bearer ${userToken}`)
       .field('title', 'Test Title')
       .attach('video', largeFile, { contentType: 'video/mp4' });
     fs.unlinkSync(largeFile);
