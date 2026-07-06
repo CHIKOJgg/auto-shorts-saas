@@ -34,8 +34,19 @@ test('shows register page at /register', () => {
   expect(screen.getByText(/Create Account/i)).toBeInTheDocument();
 });
 
+test('shows pricing page at /pricing', () => {
+  renderWithProviders(<App />, { initialEntries: ['/pricing'] });
+  expect(screen.getByText(/Simple, transparent pricing/i)).toBeInTheDocument();
+});
+
 test('shows pricing link in navbar when authenticated', () => {
   localStorage.setItem('auth_token', 'fake-token');
   renderWithProviders(<App />);
   expect(screen.getByText(/Pricing/i)).toBeInTheDocument();
+});
+
+test('shows dashboard link in navbar when authenticated', () => {
+  localStorage.setItem('auth_token', 'fake-token');
+  renderWithProviders(<App />);
+  expect(screen.getByText(/Dashboard/i)).toBeInTheDocument();
 });
