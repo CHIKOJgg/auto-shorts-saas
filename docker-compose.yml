@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_DB: auto_shorts_saas
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_PASSWORD: postgres
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -24,7 +24,7 @@ services:
       - backend/.env
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/auto_shorts_saas
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/auto_shorts_saas
     ports:
       - "4000:4000"
     volumes:
