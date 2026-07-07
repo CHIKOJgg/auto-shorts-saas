@@ -3,6 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "docker:dev": "docker compose -f docker-compose.dev.yml up -d",
+    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f",
+    "docker:dev:stop": "docker compose -f docker-compose.dev.yml down",
+    "docker:prod": "docker compose up -d",
+    "docker:prod:logs": "docker compose logs -f",
+    "docker:prod:stop": "docker compose down",
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm start --prefix frontend/frontend",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
